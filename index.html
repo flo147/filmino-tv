@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Fire TV Launcher Prototyp</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for authentic Minecraft Pixel Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+
+    <style>
+        /* Custom Pixel Fonts & Minecraft Color Palette */
+        :root {
+            --mc-bg: #0d0f12;
+            --mc-dirt-dark: #14171c;
+            --mc-stone: #242930;
+            --mc-emerald: #55ff55;
+            --mc-emerald-dark: #1e6e22;
+            --mc-gold: #ffaa00;
+            --mc-redstone: #ff3333;
+            --mc-diamond: #55ffff;
+            --mc-text-light: #e0e6ed;
+        }
+
+        body {
+            font-family: 'Silkscreen', 'VT323', monospace;
+            background-color: var(--mc-bg);
+            color: var(--mc-text-light);
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(#1e242d 1px, transparent 1px),
+                radial-gradient(#14181f 1px, #0d0f12 1px);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+        }
+
+        .mc-font-pixel {
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        /* Minecraft 3D Bevel Box Styling */
+        .mc-block {
+            background-color: #21252d;
+            border-top: 4px solid #3a414d;
+            border-left: 4px solid #3a414d;
+            border-bottom: 4px solid #111419;
+            border-right: 4px solid #111419;
+            box-shadow: inset 0 0 0 2px #2a303a;
+            position: relative;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .mc-block-gold {
+            background-color: #c98800;
+            border-top: 4px solid #ffcc33;
+            border-left: 4px solid #ffcc33;
+            border-bottom: 4px solid #784f00;
+            border-right: 4px solid #784f00;
+        }
+
+        .mc-block-redstone {
+            background-color: #8b0000;
+            border-top: 4px solid #ff5555;
+            border-left: 4px solid #ff5555;
+            border-bottom: 4px solid #440000;
+            border-right: 4px solid #440000;
+        }
+
+        /* Remote TV Focus State (Glowing Emerald Pixel Border) */
+        .focusable {
+            outline: none;
+        }
+
+        .focusable.focused, .focusable:focus {
+            outline: 4px solid var(--mc-emerald) !important;
+            outline-offset: 2px;
+            transform: scale(1.05);
+            z-index: 20;
+            box-shadow: 0 0 15px rgba(85, 255, 85, 0.6), inset 0 0 10px rgba(85, 255, 85, 0.3) !important;
+            animation: pulse-emerald 1.5s infinite alternate;
+        }
+
+        @keyframes pulse-emerald {
+            0% { outline-color: #55ff55; box-shadow: 0 0 12px rgba(85, 255, 85, 0.5); }
+            100% { outline-color: #aaffaa; box-shadow: 0 0 22px rgba(85, 255, 85, 0.9); }
+        }
+
+        /* Minecraft Hotbar Slot Look */
+        .mc-slot {
+            background-color: #171a20;
+            border-top: 3px solid #0c0e11;
+            border-left: 3px solid #0c0e11;
+            border-bottom: 3px solid #363d4a;
+            border-right: 3px solid #363d4a;
+        }
+
+        /* Pixel Text Shadow */
+        .pixel-shadow {
+            text-shadow: 3px 3px 0px #000000;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0d0f12;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3a414d;
+            border: 2px solid #0d0f12;
+        }
+
+        /* CRT/Scanline subtlety overlay for retro TV feel */
+        .tv-overlay {
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.15) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 md:p-6 text-gray-200 select-none">
+
+    <!-- CRT Overlay for TV Vibe -->
+    <div class="tv-overlay fixed inset-0 z-50 pointer-events-none opacity-40"></div>
+
+    <!-- MAIN TV LAUNCHER WRAPPER -->
+    <div class="max-w-7xl mx-auto w-full flex-grow flex flex-col gap-6 z-10">
+
+        <!-- HEADER BANNER: Minecraft HUD Style -->
+        <header class="mc-block p-4 flex flex-col md:flex-row items-center justify-between gap-4 border-b-4 border-emerald-900 bg-opacity-95">
+            
+            <!-- Dynamic Personal Greeting Banner -->
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <div class="mc-slot p-2 bg-black bg-opacity-40 flex-shrink-0">
+                    <span id="greeting-icon" class="text-3xl">🍿</span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="mc-font-pixel text-xs text-green-400 tracking-wider">[ SERVER GREETING ]</span>
+                        <span id="mode-badge" class="px-2 py-0.5 text-[10px] bg-green-900 text-green-200 font-bold rounded">EVENING</span>
+                    </div>
+                    <p id="greeting-text" class="text-lg md:text-xl font-bold text-white pixel-shadow mt-0.5">
+                        Willkommen zum Filmino Abend!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Top Right HUD Controls & Clock -->
+            <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                
+                <!-- Redstone Kids Screen-Time Timer Indicator -->
+                <div id="redstone-timer-pill" class="hidden mc-slot px-3 py-1.5 flex items-center gap-2 bg-red-950/80 border-red-700">
+                    <span class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span>
+                    <span class="text-xs text-red-300 font-bold">REDSTONE TIMER:</span>
+                    <span id="timer-display" class="mc-font-pixel text-xs text-yellow-300">30:00</span>
+                </div>
+
+                <!-- Day/Night Preview Switch Button -->
+                <button id="toggle-mode-btn" class="focusable mc-block px-3 py-2 text-xs text-emerald-300 hover:bg-stone-700 flex items-center gap-1.5 cursor-pointer" tabindex="0">
+                    <span>☀️/🌙</span>
+                    <span class="hidden sm:inline">Tag/Nacht (T)</span>
+                </button>
+
+                <!-- Sound Toggle -->
+                <button id="toggle-sound-btn" class="focusable mc-block px-3 py-2 text-xs text-yellow-400 hover:bg-stone-700 flex items-center gap-1 cursor-pointer" tabindex="0">
+                    <span id="sound-icon">🔊</span>
+                    <span id="sound-text" class="hidden sm:inline">TON AN</span>
+                </button>
+
+                <!-- Live Pixel Clock -->
+                <div class="mc-slot px-4 py-2 bg-black/60 text-right">
+                    <div id="pixel-clock" class="mc-font-pixel text-xl text-emerald-400 pixel-shadow">19:42</div>
+                    <div id="pixel-date" class="text-xs text-gray-400 mt-0.5">SA. 21. NOV</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- SECTION 1: DEINE STREAMING APPS -->
+        <section class="space-y-3">
+            <div class="flex items-center justify-between">
+                <h2 class="mc-font-pixel text-sm md:text-base text-emerald-400 flex items-center gap-2 pixel-shadow">
+                    <span class="text-yellow-400">⚔️</span> DEINE APPS
+                </h2>
+                <span class="text-xs text-gray-400">Direkter App-Start (HDMI 1 / Fire OS)</span>
+            </div>
+
+            <!-- Grid of Main Apps -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                
+                <!-- Netflix Block -->
+                <div class="focusable mc-block group p-4 flex flex-col items-center justify-center gap-3 cursor-pointer min-h-[130px] hover:border-red-500" 
+                     data-app="Netflix" data-package="com.netflix.ninja" tabindex="0">
+                    <div class="mc-slot p-3 bg-red-950/40 border-red-800 text-red-500 text-4xl group-hover:scale-110 transition-transform">
+                        <svg class="w-10 h-10 fill-current" viewBox="0 0 24 24">
+                            <path d="M5.398 0v24h4.141V11.168L14.602 24h4.141V0h-4.141v12.832L9.539 0H5.398z"/>
+                        </svg>
+                    </div>
+                    <div class="text-center">
+                        <div class="font-bold text-sm text-white group-hover:text-red-400">Netflix</div>
+                        <div class="text-[10px] text-gray-400">Serien & Filme</div>
+                    </div>
+                </div>
+
+                <!-- Prime Video Block -->
+                <div class="focusable mc-block group p-4 flex flex-col items-center justify-center gap-3 cursor-pointer min-h-[130px] hover:border-sky-400" 
+                     data-app="Prime Video" data-package="com.amazon.avod" tabindex="0">
+                    <div class="mc-slot p-3 bg-sky-950/50 border-sky-700 text-sky-400 group-hover:scale-110 transition-transform">
+                        <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none">
+                            <polygon points="8,5 19,12 8,19" fill="#38bdf8"/>
+                            <path d="M4 19.5C8.5 22 15.5 22 20 19.5" stroke="#38bdf8" stroke-width="2" stroke-linecap="square"/>
+                        </svg>
+                    </div>
+                    <div class="text-center">
+                        <div class="font-bold text-sm text-white group-hover:text-sky-300">Prime Video</div>
+                        <div class="text-[10px] text-gray-400">Amazon Stream</div>
+                    </div>
+                </div>
+
+                <!-- DAZN / NFL Game Pass Block -->
+                <div class="focusable mc-block group p-4 flex flex-col items-center justify-center gap-3 cursor-pointer min-h-[130px] hover:border-lime-400" 
+                     data-app="DAZN (NFL Game Pass)" data-package="com.dazn" tabindex="0">
+                    <div class="mc-slot p-3 bg-black border-lime-400 text-lime-400 group-hover:scale-110 transition-transform relative">
+                        <!-- Pixel DAZN + American Football Icon -->
+                        <svg class="w-10 h-10" viewBox="0 0 16 16" fill="none">
+                            <!-- Football Body -->
+                            <rect x="3" y="4" width="10" height="8" fill="#8B4513"/>
+                            <rect x="2" y="5" width="12" height="6" fill="#A0522D"/>
+                            <rect x="1" y="7" width="14" height="2" fill="#8B4513"/>
+                            <!-- White Stripes -->
+                            <rect x="4" y="4" width="1" height="8" fill="#FFFFFF"/>
+                            <rect x="11" y="4" width="1" height="8" fill="#FFFFFF"/>
+                            <!-- Laces -->
+                            <rect x="6" y="7" width="4" height="2" fill="#FFFFFF"/>
+                            <rect x="7" y="6" width="1" height="4" fill="#FFFFFF"/>
+                            <rect x="9" y="6" width="1" height="4" fill="#FFFFFF"/>
+                            <!-- DAZN Volt Accent Corner -->
+                            <rect x="12" y="1" width="3" height="3" fill="#CCFF00"/>
+                        </svg>
+                    </div>
+                    <div class="text-center">
+                        <div class="font-bold text-sm text-white group-hover:text-lime-300">DAZN</div>
+                        <div class="text-[10px] text-lime-400 font-bold">NFL Game Pass</div>
+                    </div>
+                </div>
+
+                <!-- ORF ON Block -->
+                <div class="focusable mc-block group p-4 flex flex-col items-center justify-center gap-3 cursor-pointer min-h-[130px] hover:border-red-500" 
+                     data-app="ORF ON" data-package="at.orf.tvthek" tabindex="0">
+                    <div class="mc-slot p-3 bg-red-900/50 border-red-600 text-white group-hover:scale-110 transition-transform flex items-center justify-center w-16 h-16">
+                        <span class="mc-font-pixel text-xs text-red-400 tracking-tighter">ORF</span>
+                    </div>
+                    <div class="text-center">
+                        <div class="font-bold text-sm text-white group-hover:text-red-300">ORF ON</div>
+                        <div class="text-[10px] text-gray-400">Live & Mediathek</div>
+                    </div>
+                </div>
+
+                <!-- Joyn Block -->
+                <div class="focusable mc-block group p-4 flex flex-col items-center justify-center gap-3 cursor-pointer min-h-[130px] hover:border-emerald-400" 
+                     data-app="Joyn" data-package="de.prosiebensat1digital.seventv" tabindex="0">
+                    <div class="mc-slot p-3 bg-emerald-950/60 border-emerald-500 text-emerald-400 group-hover:scale-110 transition-transform flex items-center justify-center w-16 h-16">
+                        <span class="mc-font-pixel text-xs text-emerald-300">JOYN</span>
+                    </div>
+                    <div class="text-center">
+                        <div class="font-bold text-sm text-white group-hover:text-emerald-300">Joyn</div>
+                        <div class="text-[10px] text-gray-400">TV & Streaming</div>
+                    </div>
+                </div>
+
+                <!-- Spotify Block -->
+                <div class="focusable mc-block group p-4 flex flex-col items-center justify-center gap-3 cursor-pointer min-h-[130px] hover:border-green-400" 
+                     data-app="Spotify" data-package="com.spotify.tv.android" tabindex="0">
+                    <div class="mc-slot p-3 bg-green-950/60 border-green-500 text-green-400 group-hover:scale-110 transition-transform">
+                        <svg class="w-10 h-10 fill-current" viewBox="0 0 24 24">
+                            <path d="M12 0C5.372 0 0 5.373 0 12s5.372 12 12 12 12-5.373 12-12S18.628 0 12 0zm5.508 17.302a.748.748 0 01-1.03.248c-2.822-1.724-6.374-2.114-10.558-1.158a.75.75 0 01-.334-1.462c4.578-1.046 8.504-.596 11.674 1.342a.75.75 0 01.248 1.03zm1.47-3.27a.937.937 0 01-1.288.308c-3.23-1.986-8.154-2.562-11.976-1.402a.937.937 0 01-.546-1.792c4.364-1.324 9.79-.682 13.502 1.598a.938.938 0 01.308 1.288zm.126-3.404C15.23 8.326 8.832 8.114 5.13 9.238a1.124 1.124 0 11-.654-2.152c4.248-1.29 11.314-1.04 15.776 1.608a1.124 1.124 0 01-1.148 1.934z"/>
+                        </svg>
+                    </div>
+                    <div class="text-center">
+                        <div class="font-bold text-sm text-white group-hover:text-green-300">Spotify</div>
+                        <div class="text-[10px] text-gray-400">Musik & Hörspiele</div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SECTION 2: NETFLIX & ARD QUICK-LINKS (DIREKT WEITERSCHAUEN FOR KIDS & FAMILY) -->
+        <section class="space-y-3">
+            <div class="flex items-center justify-between">
+                <h2 class="mc-font-pixel text-sm md:text-base text-red-400 flex items-center gap-2 pixel-shadow">
+                    <span class="text-red-500">🔥</span> DIREKT WEITERSCHAUEN — DIE LIEBLINGSSERIEN
+                </h2>
+                <span class="text-xs text-gray-400">1-Klick Start (Netflix & ARD Mediathek)</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                
+                <!-- Quick Link Slot 1: Die Thundermans -->
+                <div class="focusable mc-block p-3.5 cursor-pointer hover:border-yellow-400 flex items-center gap-3 group" 
+                     data-quicklink-idx="0" tabindex="0">
+                    <div class="mc-slot w-14 h-14 bg-blue-950/80 border-blue-500 flex items-center justify-center p-1.5 flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <svg class="w-full h-full" viewBox="0 0 24 24" fill="none">
+                            <!-- Pixel Lightning Bolt / Thunder Icon -->
+                            <path d="M13 2L4 13H11L9 22L20 10H12L14 2Z" fill="#FFD700" stroke="#0055FF" stroke-width="1.5" stroke-linejoin="miter"/>
+                            <rect x="11" y="4" width="2" height="2" fill="#FFFFFF"/>
+                        </svg>
+                    </div>
+                    <div class="overflow-hidden">
+                        <div class="text-[10px] text-yellow-400 mc-font-pixel">NETFLIX</div>
+                        <div id="ql-title-0" class="font-bold text-sm text-white truncate group-hover:text-yellow-300">Die Thundermans</div>
+                        <div class="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-yellow-400 inline-block"></span> Direkt starten
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Link Slot 2: Is It Cake? -->
+                <div class="focusable mc-block p-3.5 cursor-pointer hover:border-amber-400 flex items-center gap-3 group" 
+                     data-quicklink-idx="1" tabindex="0">
+                    <div class="mc-slot w-14 h-14 bg-stone-900 border-amber-600 flex items-center justify-center p-1 flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <!-- Pixel Minecraft Cake SVG -->
+                        <svg class="w-full h-full" viewBox="0 0 16 16" fill="none">
+                            <!-- Cake Sponge Base -->
+                            <rect x="2" y="9" width="12" height="5" fill="#8B4513"/>
+                            <rect x="2" y="10" width="12" height="1" fill="#A0522D"/>
+                            <!-- White Frosting Top -->
+                            <rect x="2" y="5" width="12" height="4" fill="#FFFFFF"/>
+                            <rect x="2" y="8" width="2" height="2" fill="#FFFFFF"/>
+                            <rect x="6" y="8" width="2" height="2" fill="#FFFFFF"/>
+                            <rect x="10" y="8" width="2" height="2" fill="#FFFFFF"/>
+                            <!-- Red Cherries / Toppings -->
+                            <rect x="4" y="6" width="2" height="2" fill="#FF2222"/>
+                            <rect x="10" y="6" width="2" height="2" fill="#FF2222"/>
+                            <!-- Pixel Knife / Question Mark hint -->
+                            <path d="M13 1L15 3L9 9H7V7L13 1Z" fill="#55FFFF"/>
+                        </svg>
+                    </div>
+                    <div class="overflow-hidden">
+                        <div class="text-[10px] text-red-400 mc-font-pixel">NETFLIX</div>
+                        <div id="ql-title-1" class="font-bold text-sm text-white truncate group-hover:text-red-300">Is It Cake?</div>
+                        <div class="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span> Direkt starten
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Link Slot 3: Nailed It! -->
+                <div class="focusable mc-block p-3.5 cursor-pointer hover:border-pink-500 flex items-center gap-3 group" 
+                     data-quicklink-idx="2" tabindex="0">
+                    <div class="mc-slot w-14 h-14 bg-pink-950/60 border-pink-500 flex items-center justify-center p-1 flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <!-- Pixel Cupcake with Sprinkles & Gold Star -->
+                        <svg class="w-full h-full" viewBox="0 0 16 16" fill="none">
+                            <!-- Cupcake Wrapper -->
+                            <path d="M4 10L5 15H11L12 10H4Z" fill="#D2691E"/>
+                            <rect x="5" y="10" width="1" height="5" fill="#8B4513"/>
+                            <rect x="8" y="10" width="1" height="5" fill="#8B4513"/>
+                            <rect x="10" y="10" width="1" height="5" fill="#8B4513"/>
+                            <!-- Pink Frosting -->
+                            <rect x="3" y="6" width="10" height="4" fill="#FF69B4"/>
+                            <rect x="4" y="4" width="8" height="3" fill="#FFB6C1"/>
+                            <!-- Sprinkles -->
+                            <rect x="5" y="5" width="1" height="1" fill="#55FFFF"/>
+                            <rect x="9" y="5" width="1" height="1" fill="#FFD700"/>
+                            <rect x="7" y="7" width="1" height="1" fill="#55FF55"/>
+                            <rect x="11" y="7" width="1" height="1" fill="#FFFF55"/>
+                            <!-- Gold Star / Trophy on top -->
+                            <path d="M8 1L9 3H11L9.5 4.5L10 6.5L8 5.2L6 6.5L6.5 4.5L5 3H7L8 1Z" fill="#FFD700"/>
+                        </svg>
+                    </div>
+                    <div class="overflow-hidden">
+                        <div class="text-[10px] text-pink-400 mc-font-pixel">NETFLIX</div>
+                        <div id="ql-title-2" class="font-bold text-sm text-white truncate group-hover:text-pink-300">Nailed It!</div>
+                        <div class="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-pink-500 inline-block"></span> Direkt starten
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Link Slot 4: Sendung mit der Maus -->
+                <div class="focusable mc-block p-3.5 cursor-pointer hover:border-orange-500 flex items-center gap-3 group" 
+                     data-quicklink-idx="3" tabindex="0">
+                    <div class="mc-slot w-14 h-14 bg-orange-950/80 border-orange-500 flex items-center justify-center p-1 flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <!-- Icon Pixel-Art Orange Maus -->
+                        <svg class="w-full h-full" viewBox="0 0 16 16" fill="none">
+                            <!-- Round Mouse Ears -->
+                            <rect x="1" y="1" width="4" height="4" fill="#4A2511"/>
+                            <rect x="2" y="2" width="2" height="2" fill="#FF8C00"/>
+                            <rect x="11" y="1" width="4" height="4" fill="#4A2511"/>
+                            <rect x="12" y="2" width="2" height="2" fill="#FF8C00"/>
+                            <!-- Orange Head -->
+                            <rect x="3" y="4" width="10" height="9" fill="#FF7700"/>
+                            <rect x="4" y="3" width="8" height="10" fill="#FF7700"/>
+                            <!-- Eyes -->
+                            <rect x="5" y="6" width="2" height="3" fill="#FFFFFF"/>
+                            <rect x="6" y="7" width="1" height="2" fill="#000000"/>
+                            <rect x="9" y="6" width="2" height="3" fill="#FFFFFF"/>
+                            <rect x="9" y="7" width="1" height="2" fill="#000000"/>
+                            <!-- Black Nose -->
+                            <rect x="7" y="10" width="2" height="2" fill="#000000"/>
+                            <!-- Snout accent -->
+                            <rect x="6" y="11" width="4" height="2" fill="#FF9933"/>
+                        </svg>
+                    </div>
+                    <div class="overflow-hidden">
+                        <div class="text-[10px] text-orange-400 mc-font-pixel">ARD MEDIATHEK</div>
+                        <div id="ql-title-3" class="font-bold text-sm text-white truncate group-hover:text-orange-300">Sendung m. d. Maus</div>
+                        <div class="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block"></span> Neueste Folge
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Quicklinks Block -->
+                <div id="btn-edit-quicklinks" class="focusable mc-block p-3.5 cursor-pointer hover:border-yellow-400 bg-stone-800/80 flex items-center justify-center gap-2 group" 
+                     tabindex="0">
+                    <span class="text-xl group-hover:rotate-45 transition-transform">⚙️</span>
+                    <span class="font-bold text-xs text-yellow-300 group-hover:text-yellow-200">LINKS BEARBEITEN</span>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SECTION 3: EXTRAS & WERKZEUGE -->
+        <section class="space-y-3">
+            <div class="flex items-center justify-between">
+                <h2 class="mc-font-pixel text-sm md:text-base text-yellow-400 flex items-center gap-2 pixel-shadow">
+                    <span class="text-yellow-500">🧪</span> EXTRAS & WERKZEUGE
+                </h2>
+                <span class="text-xs text-gray-400">Sonderfunktionen für Kids & Familie</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                <!-- Lucky Block Decision Maker -->
+                <div id="btn-lucky-block" class="focusable mc-block mc-block-gold p-4 cursor-pointer flex items-center gap-4 group" tabindex="0">
+                    <div class="mc-slot w-14 h-14 bg-amber-900/60 border-yellow-300 flex items-center justify-center text-3xl font-black text-yellow-200 group-hover:scale-110 transition-transform">
+                        ?
+                    </div>
+                    <div>
+                        <div class="mc-font-pixel text-xs text-yellow-100">GLÜCKS-BLOCK</div>
+                        <div class="font-bold text-base text-white">Was schauen wir?</div>
+                        <div class="text-xs text-yellow-200/80">Zufallsgenerator für den Abend</div>
+                    </div>
+                </div>
+
+                <!-- Redstone Timer Configurator -->
+                <div id="btn-redstone-timer" class="focusable mc-block mc-block-redstone p-4 cursor-pointer flex items-center gap-4 group" tabindex="0">
+                    <div class="mc-slot w-14 h-14 bg-red-950 border-red-400 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
+                        ⏳
+                    </div>
+                    <div>
+                        <div class="mc-font-pixel text-xs text-red-200">REDSTONE-TIMER</div>
+                        <div class="font-bold text-base text-white">Medienzeit begrenzen</div>
+                        <div class="text-xs text-red-200/80">15 / 30 / 60 Min Timer aktivieren</div>
+                    </div>
+                </div>
+
+                <!-- Switch Launcher Preset/Info -->
+                <div id="btn-info-modal" class="focusable mc-block p-4 cursor-pointer flex items-center gap-4 group" tabindex="0">
+                    <div class="mc-slot w-14 h-14 bg-emerald-950 border-emerald-500 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
+                        📜
+                    </div>
+                    <div>
+                        <div class="mc-font-pixel text-xs text-emerald-400">ANLEITUNG & APK</div>
+                        <div class="font-bold text-base text-white">Installation auf TV</div>
+                        <div class="text-xs text-gray-400">Wie es auf den Fire Stick kommt</div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+
+    <!-- FOOTER: REMOTE CONTROL NAVIGATION HINT BAR -->
+    <footer class="max-w-7xl mx-auto w-full mt-6 mc-slot p-3 bg-black/80 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400 z-10 border-t-2 border-emerald-900">
+        <div class="flex items-center gap-4 flex-wrap">
+            <span class="flex items-center gap-1.5">
+                <kbd class="px-1.5 py-0.5 bg-stone-800 border border-stone-600 rounded text-emerald-400 font-mono text-[11px]">▲ ▼ ◄ ►</kbd>
+                <span>Navigieren</span>
+            </span>
+            <span class="flex items-center gap-1.5">
+                <kbd class="px-1.5 py-0.5 bg-stone-800 border border-stone-600 rounded text-yellow-400 font-mono text-[11px]">ENTER / OK</kbd>
+                <span>Auswählen</span>
+            </span>
+            <span class="flex items-center gap-1.5">
+                <kbd class="px-1.5 py-0.5 bg-stone-800 border border-stone-600 rounded text-cyan-400 font-mono text-[11px]">T</kbd>
+                <span>Tag/Nacht wechseln</span>
+            </span>
+            <span class="flex items-center gap-1.5">
+                <kbd class="px-1.5 py-0.5 bg-stone-800 border border-stone-600 rounded text-red-400 font-mono text-[11px]">ESC</kbd>
+                <span>Schließen</span>
+            </span>
+        </div>
+        <div class="text-emerald-500 font-bold mc-font-pixel text-[10px]">
+            FIRE OS 7 READY • SAMSUNG UE55H6290
+        </div>
+    </footer>
+
+    <!-- MODAL OVERLAY WRAPPER -->
+    <div id="modal-container" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 hidden backdrop-blur-sm">
+        
+        <!-- MODAL CONTENT BOX -->
+        <div id="modal-box" class="mc-block p-6 max-w-lg w-full bg-stone-900 border-4 border-emerald-500 space-y-4">
+            <div class="flex items-center justify-between border-b border-stone-700 pb-3">
+                <h3 id="modal-title" class="mc-font-pixel text-base text-emerald-400 flex items-center gap-2">
+                    TITLE
+                </h3>
+                <span id="modal-close-btn" class="text-gray-400 hover:text-white cursor-pointer font-bold text-xl px-2">✕</span>
+            </div>
+
+            <div id="modal-body" class="text-sm text-gray-200 space-y-3">
+                <!-- Dynamic Content injected via JS -->
+            </div>
+
+            <div id="modal-footer" class="flex justify-end gap-3 pt-3 border-t border-stone-700">
+                <!-- Action buttons -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT: TV REMOTE NAVIGATION, AUDIO SYNTHESIZER, LOGIC -->
+    <script>
+        // --- 1. WEB AUDIO API SYNTHESIZER (8-bit Minecraft Sound Effects) ---
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'move') {
+                    // Crisp Minecraft UI focus click sound
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.04);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+                    osc.start(now);
+                    osc.stop(now + 0.04);
+                } else if (type === 'select') {
+                    // Minecraft XP / Button Click Fanfare
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.06); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.12); // G5
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'lucky') {
+                    // Lucky Block Spin Sound
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(300 + Math.random() * 400, now);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                }
+            } catch (e) {
+                console.log('Audio error:', e);
+            }
+        }
+
+        // --- 2. STATE MANAGEMENT & QUICKLINKS ---
+        let quickLinks = [
+            { 
+                title: "Die Thundermans", 
+                badge: "NETFLIX", 
+                url: "https://www.netflix.com/title/81186615", 
+                type: "url",
+                pkg: "com.netflix.ninja"
+            },
+            { 
+                title: "Is It Cake?", 
+                badge: "NETFLIX", 
+                url: "https://www.netflix.com/title/81333845", 
+                type: "url",
+                pkg: "com.netflix.ninja"
+            },
+            { 
+                title: "Nailed It!", 
+                badge: "NETFLIX", 
+                url: "https://www.netflix.com/title/80179138", 
+                type: "url",
+                pkg: "com.netflix.ninja"
+            },
+            { 
+                title: "Sendung mit der Maus", 
+                badge: "ARD MEDIATHEK", 
+                url: "https://www.ardmediathek.de/sendung/die-sendung-mit-der-maus/Y3JpZDovL3dkci5kZS9raW5kZXIvU2VuZHVuZyBtaXQgZGVyIE1hdXM", 
+                type: "url",
+                pkg: "de.daserste.mediathek"
+            }
+        ];
+
+        // Navigation, Day/Night & Timer State
+        let currentFocusIndex = 0;
+        let isNightMode = new Date().getHours() >= 18 || new Date().getHours() < 6;
+        let redstoneInterval = null;
+        const dayQuotes = [
+            "Sonne draußen, Creeper drinnen – ab in die echte Welt!",
+            "Kein Fernseher am Tag! Geh raus ein paar echte Blöcke bauen!",
+            "Tageslicht-Alarm! Draußen gibt's bessere Grafik als am TV!"
+        ];
+        let currentDayQuoteIdx = 0;
+
+        function getFocusables() {
+            return Array.from(document.querySelectorAll('.focusable'));
+        }
+
+        // --- ANDROID BRIDGE LAUNCH HELPER ---
+        function launchTarget(appName, type, targetVal, directUrl = '') {
+            if (window.AndroidBridge) {
+                if (type === 'package') {
+                    window.AndroidBridge.launchApp(targetVal);
+                } else if (type === 'url') {
+                    window.AndroidBridge.openUrl(directUrl || targetVal);
+                }
+                return;
+            }
+
+            // Fallback for browser preview testing
+            openModal(
+                `<span class="text-emerald-400">🚀 STARTE: ${appName}</span>`,
+                `
+                <div class="text-center py-4 space-y-3">
+                    <div class="text-4xl animate-bounce">📺</div>
+                    <div class="text-base font-bold text-white">${appName}</div>
+                    <div class="text-xs text-gray-400 font-mono bg-black/60 p-2.5 rounded border border-stone-700 text-left break-all">
+                        <span class="text-yellow-400 font-bold">Ziel:</span> ${directUrl || targetVal}
+                    </div>
+                    <p class="text-xs text-stone-300">
+                        Auf deinem Fire TV Stick startet hier direkt die App/Mediathek. Im Browser-Prototyp kannst du den Link per Button unten testen.
+                    </p>
+                </div>
+                `,
+                `
+                <a href="${directUrl || targetVal}" target="_blank" onclick="closeModal()" class="mc-block px-4 py-2 text-xs text-emerald-300 bg-emerald-950 hover:bg-emerald-800 cursor-pointer font-bold inline-block text-center">LINK IM BROWSER ÖFFNEN</a>
+                <button onclick="closeModal()" class="mc-block px-4 py-2 text-xs text-gray-300 hover:bg-stone-700 cursor-pointer">SCHLIESSEN</button>
+                `
+            );
+        }
+
+        function setFocus(index, playSnd = true) {
+            const focusables = getFocusables();
+            if (focusables.length === 0) return;
+
+            if (index < 0) index = 0;
+            if (index >= focusables.length) index = focusables.length - 1;
+
+            focusables.forEach(el => el.classList.remove('focused'));
+            currentFocusIndex = index;
+
+            const target = focusables[currentFocusIndex];
+            target.classList.add('focused');
+            target.focus();
+
+            if (playSnd) playSound('move');
+
+            // Scroll into view if needed
+            target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function navigateSpatial(direction) {
+            const focusables = getFocusables();
+            if (focusables.length === 0) return;
+
+            const current = focusables[currentFocusIndex];
+            const currentRect = current.getBoundingClientRect();
+
+            let bestMatchIndex = -1;
+            let minDistance = Infinity;
+
+            focusables.forEach((el, idx) => {
+                if (idx === currentFocusIndex) return;
+                const rect = el.getBoundingClientRect();
+
+                let isCandidate = false;
+                let dist = 0;
+
+                const dx = (rect.left + rect.width / 2) - (currentRect.left + currentRect.width / 2);
+                const dy = (rect.top + rect.height / 2) - (currentRect.top + currentRect.height / 2);
+
+                if (direction === 'LEFT' && dx < -10) {
+                    isCandidate = true;
+                    dist = Math.abs(dx) + Math.abs(dy) * 2;
+                } else if (direction === 'RIGHT' && dx > 10) {
+                    isCandidate = true;
+                    dist = Math.abs(dx) + Math.abs(dy) * 2;
+                } else if (direction === 'UP' && dy < -10) {
+                    isCandidate = true;
+                    dist = Math.abs(dy) + Math.abs(dx) * 2;
+                } else if (direction === 'DOWN' && dy > 10) {
+                    isCandidate = true;
+                    dist = Math.abs(dy) + Math.abs(dx) * 2;
+                }
+
+                if (isCandidate && dist < minDistance) {
+                    minDistance = dist;
+                    bestMatchIndex = idx;
+                }
+            });
+
+            if (bestMatchIndex !== -1) {
+                setFocus(bestMatchIndex);
+            }
+        }
+
+        // Handle Keyboard Controls (Arrows, Enter, Esc, T)
+        document.addEventListener('keydown', (e) => {
+            initAudio();
+
+            // If a modal is open, let modal handle Esc or tab key
+            const modalOpen = !document.getElementById('modal-container').classList.contains('hidden');
+
+            if (modalOpen) {
+                if (e.key === 'Escape' || e.key === 'Esc') {
+                    closeModal();
+                }
+                return;
+            }
+
+            switch (e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    navigateSpatial('LEFT');
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    navigateSpatial('RIGHT');
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    navigateSpatial('UP');
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    navigateSpatial('DOWN');
+                    break;
+                case 'Enter':
+                case ' ':
+                    e.preventDefault();
+                    const currentEl = getFocusables()[currentFocusIndex];
+                    if (currentEl) {
+                        playSound('select');
+                        currentEl.click();
+                    }
+                    break;
+                case 't':
+                case 'T':
+                    e.preventDefault();
+                    toggleDayNightMode();
+                    break;
+            }
+        });
+
+        // Mouse Hover Integration
+        document.addEventListener('mousemove', (e) => {
+            const focusables = getFocusables();
+            const hovered = e.target.closest('.focusable');
+            if (hovered && focusables.includes(hovered)) {
+                const idx = focusables.indexOf(hovered);
+                if (idx !== currentFocusIndex) {
+                    setFocus(idx, false);
+                }
+            }
+        });
+
+        // --- 4. GREETING & DAY/NIGHT MODE TOGGLE ---
+        function updateGreeting() {
+            const greetingText = document.getElementById('greeting-text');
+            const greetingIcon = document.getElementById('greeting-icon');
+            const modeBadge = document.getElementById('mode-badge');
+
+            if (isNightMode) {
+                greetingIcon.textContent = "🍿";
+                modeBadge.textContent = "FILMINO ABEND";
+                modeBadge.className = "px-2 py-0.5 text-[10px] bg-green-900 text-green-200 font-bold rounded";
+                greetingText.textContent = "Willkommen zum Filmino Abend!";
+                greetingText.className = "text-lg md:text-xl font-bold text-green-400 pixel-shadow mt-0.5";
+            } else {
+                greetingIcon.textContent = "☀️";
+                modeBadge.textContent = "TAGES-MODUS";
+                modeBadge.className = "px-2 py-0.5 text-[10px] bg-yellow-900 text-yellow-200 font-bold rounded";
+                greetingText.textContent = dayQuotes[currentDayQuoteIdx];
+                greetingText.className = "text-sm md:text-base font-bold text-yellow-300 pixel-shadow mt-0.5";
+            }
+        }
+
+        function toggleDayNightMode() {
+            isNightMode = !isNightMode;
+            if (!isNightMode) {
+                currentDayQuoteIdx = (currentDayQuoteIdx + 1) % dayQuotes.length;
+            }
+            playSound('select');
+            updateGreeting();
+        }
+
+        document.getElementById('toggle-mode-btn').addEventListener('click', toggleDayNightMode);
+
+        // --- 5. REAL-TIME PIXEL CLOCK ---
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('pixel-clock').textContent = `${hours}:${minutes}`;
+
+            const days = ['SO.', 'MO.', 'DI.', 'MI.', 'DO.', 'FR.', 'SA.'];
+            const months = ['JAN', 'FEB', 'MÄR', 'APR', 'MAI', 'JUN', 'JUL', 'AUG', 'SEP', 'OKT', 'NOV', 'DEZ'];
+            const dayStr = days[now.getDay()];
+            const dateStr = now.getDate();
+            const monthStr = months[now.getMonth()];
+
+            document.getElementById('pixel-date').textContent = `${dayStr} ${dateStr}. ${monthStr}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- 6. SOUND TOGGLE BUTTON ---
+        document.getElementById('toggle-sound-btn').addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-icon').textContent = soundEnabled ? '🔊' : '🔇';
+            document.getElementById('sound-text').textContent = soundEnabled ? 'TON AN' : 'STUMM';
+            if (soundEnabled) playSound('select');
+        });
+
+        // --- 7. APP LAUNCHERS & MODALS ---
+        const modalContainer = document.getElementById('modal-container');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        const modalFooter = document.getElementById('modal-footer');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+
+        function openModal(titleHTML, bodyHTML, footerHTML = '') {
+            modalTitle.innerHTML = titleHTML;
+            modalBody.innerHTML = bodyHTML;
+            modalFooter.innerHTML = footerHTML;
+            modalContainer.classList.remove('hidden');
+
+            // Set focus inside modal if there's a button
+            const modalBtn = modalContainer.querySelector('button');
+            if (modalBtn) modalBtn.focus();
+        }
+
+        function closeModal() {
+            modalContainer.classList.add('hidden');
+            setFocus(currentFocusIndex, false);
+        }
+
+        modalCloseBtn.addEventListener('click', closeModal);
+
+        // App Tile Click Event Handler
+        document.querySelectorAll('[data-app]').forEach(appEl => {
+            appEl.addEventListener('click', () => {
+                const appName = appEl.getAttribute('data-app');
+                const pkgName = appEl.getAttribute('data-package');
+                launchTarget(appName, 'package', pkgName);
+            });
+        });
+
+        // Quicklink Click Event Handler
+        document.querySelectorAll('[data-quicklink-idx]').forEach(qlEl => {
+            qlEl.addEventListener('click', () => {
+                const idx = parseInt(qlEl.getAttribute('data-quicklink-idx'));
+                const item = quickLinks[idx];
+                launchTarget(item.title, 'url', item.url, item.url);
+            });
+        });
+
+        // Edit Quicklinks Modal
+        document.getElementById('btn-edit-quicklinks').addEventListener('click', () => {
+            let formHTML = `<div class="space-y-3">`;
+            quickLinks.forEach((item, idx) => {
+                formHTML += `
+                    <div class="flex items-center gap-2">
+                        <span class="mc-font-pixel text-xs text-red-400 w-16">SLOT ${idx + 1}</span>
+                        <input type="text" id="ql-input-${idx}" value="${item.title}" 
+                               class="mc-slot w-full px-3 py-1.5 bg-stone-900 text-white text-xs border border-stone-600 focus:border-yellow-400 focus:outline-none" />
+                    </div>
+                `;
+            });
+            formHTML += `</div>`;
+
+            openModal(
+                `<span class="text-yellow-400">⚙️ QUICK-LINKS BEARBEITEN</span>`,
+                `
+                <p class="text-xs text-gray-300 mb-2">Passe hier die Titel deiner Lieblings-Serien für deine Söhne an:</p>
+                ${formHTML}
+                `,
+                `
+                <button onclick="saveQuickLinks()" class="mc-block px-4 py-2 text-xs text-emerald-300 bg-emerald-950 hover:bg-emerald-800 cursor-pointer font-bold">SPEICHERN</button>
+                <button onclick="closeModal()" class="mc-block px-4 py-2 text-xs text-gray-300 hover:bg-stone-700 cursor-pointer">ABBRECHEN</button>
+                `
+            );
+        });
+
+        function saveQuickLinks() {
+            quickLinks.forEach((item, idx) => {
+                const input = document.getElementById(`ql-input-${idx}`);
+                if (input && input.value.trim() !== '') {
+                    item.title = input.value.trim();
+                    document.getElementById(`ql-title-${idx}`).textContent = item.title;
+                }
+            });
+            playSound('select');
+            closeModal();
+        }
+
+        // --- 8. LUCKY BLOCK ROULETTE ---
+        document.getElementById('btn-lucky-block').addEventListener('click', () => {
+            const allItems = [
+                { name: "Die Thundermans", icon: "⚡", type: "url", val: "https://www.netflix.com/title/81186615" },
+                { name: "Is It Cake?", icon: "🍰", type: "url", val: "https://www.netflix.com/title/81333845" },
+                { name: "Nailed It!", icon: "🧁", type: "url", val: "https://www.netflix.com/title/80179138" },
+                { name: "Sendung mit der Maus", icon: "🐭", type: "url", val: "https://www.ardmediathek.de/sendung/die-sendung-mit-der-maus/Y3JpZDovL3dkci5kZS9raW5kZXIvU2VuZHVuZyBtaXQgZGVyIE1hdXM" },
+                { name: "NFL Game Pass (DAZN)", icon: "🏈", type: "package", val: "com.dazn" },
+                { name: "Spotify Musik", icon: "🎵", type: "package", val: "com.spotify.tv.android" },
+                { name: "ORF ON Mediathek", icon: "🇦🇹", type: "package", val: "at.orf.tvthek" }
+            ];
+
+            let selectedWinner = null;
+
+            openModal(
+                `<span class="text-yellow-400">❓ GLÜCKS-BLOCK ROULETTE</span>`,
+                `
+                <div class="text-center py-6 space-y-4">
+                    <div id="roulette-box" class="mc-block p-6 bg-amber-950 border-2 border-yellow-400 flex flex-col items-center justify-center min-h-[120px]">
+                        <div id="roulette-icon" class="text-5xl mb-2 animate-bounce">❓</div>
+                        <div id="roulette-name" class="mc-font-pixel text-sm text-yellow-200">Mische Blöcke...</div>
+                    </div>
+                </div>
+                `,
+                `<button id="roulette-action-btn" onclick="closeModal()" class="mc-block px-4 py-2 text-xs text-yellow-300 hover:bg-amber-900 cursor-pointer">SCHLIESSEN</button>`
+            );
+
+            let spinCount = 0;
+            const maxSpins = 18;
+            const interval = setInterval(() => {
+                spinCount++;
+                selectedWinner = allItems[Math.floor(Math.random() * allItems.length)];
+                document.getElementById('roulette-icon').textContent = selectedWinner.icon;
+                document.getElementById('roulette-name').textContent = selectedWinner.name;
+                playSound('lucky');
+
+                if (spinCount >= maxSpins) {
+                    clearInterval(interval);
+                    playSound('select');
+                    document.getElementById('roulette-box').className = "mc-block p-6 bg-emerald-950 border-4 border-emerald-400 flex flex-col items-center justify-center";
+                    document.getElementById('roulette-name').className = "mc-font-pixel text-base text-emerald-300 font-bold";
+                    document.getElementById('roulette-name').textContent = "GEWONNEN: " + selectedWinner.name;
+                    
+                    const actionBtn = document.getElementById('roulette-action-btn');
+                    if (actionBtn) {
+                        actionBtn.textContent = "JETZT STARTEN";
+                        actionBtn.className = "mc-block px-4 py-2 text-xs text-emerald-300 bg-emerald-950 hover:bg-emerald-800 cursor-pointer font-bold";
+                        actionBtn.onclick = () => {
+                            closeModal();
+                            launchTarget(selectedWinner.name, selectedWinner.type, selectedWinner.val);
+                        };
+                    }
+                }
+            }, 110);
+        });
+
+        // --- 9. REDSTONE KIDS SCREEN-TIME TIMER ---
+        document.getElementById('btn-redstone-timer').addEventListener('click', () => {
+            openModal(
+                `<span class="text-red-400">⏳ REDSTONE-TIMER EINSTELLEN</span>`,
+                `
+                <p class="text-xs text-gray-300 mb-4">Setze ein automatisches Zeitlimit für die Kids (Screen-Time Management):</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="startRedstoneTimer(15)" class="mc-block p-3 text-center text-xs text-yellow-300 hover:bg-stone-700 cursor-pointer">15 MINUTEN</button>
+                    <button onclick="startRedstoneTimer(30)" class="mc-block p-3 text-center text-xs text-yellow-300 hover:bg-stone-700 cursor-pointer">30 MINUTEN</button>
+                    <button onclick="startRedstoneTimer(60)" class="mc-block p-3 text-center text-xs text-yellow-300 hover:bg-stone-700 cursor-pointer">60 MINUTEN</button>
+                    <button onclick="stopRedstoneTimer()" class="mc-block p-3 text-center text-xs text-red-400 hover:bg-red-950 cursor-pointer">TIMER AUS</button>
+                </div>
+                `,
+                `<button onclick="closeModal()" class="mc-block px-4 py-2 text-xs text-gray-300 hover:bg-stone-700 cursor-pointer">ABBRECHEN</button>`
+            );
+        });
+
+        function startRedstoneTimer(mins) {
+            clearInterval(redstoneInterval);
+            let secondsLeft = mins * 60;
+            const timerPill = document.getElementById('redstone-timer-pill');
+            const timerDisplay = document.getElementById('timer-display');
+            
+            timerPill.classList.remove('hidden');
+
+            function updateTimer() {
+                const m = Math.floor(secondsLeft / 60);
+                const s = secondsLeft % 60;
+                timerDisplay.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                
+                if (secondsLeft <= 0) {
+                    clearInterval(redstoneInterval);
+                    playSound('select');
+                    openModal(
+                        `<span class="text-red-500">🚨 REDSTONE TIMER ABGELAUFEN!</span>`,
+                        `
+                        <div class="text-center py-4 space-y-2">
+                            <div class="text-5xl animate-bounce">⏰</div>
+                            <div class="text-lg font-bold text-red-400">Die Medienzeit ist vorbei!</div>
+                            <p class="text-xs text-stone-300">Zeit zum Ausmachen oder Rausgehen in die echte Welt!</p>
+                        </div>
+                        `,
+                        `<button onclick="closeModal()" class="mc-block px-4 py-2 text-xs text-yellow-300 hover:bg-stone-700 cursor-pointer">OK (FERNSEHER AUS)</button>`
+                    );
+                }
+                secondsLeft--;
+            }
+
+            updateTimer();
+            redstoneInterval = setInterval(updateTimer, 1000);
+            playSound('select');
+            closeModal();
+        }
+
+        function stopRedstoneTimer() {
+            clearInterval(redstoneInterval);
+            document.getElementById('redstone-timer-pill').classList.add('hidden');
+            playSound('move');
+            closeModal();
+        }
+
+        // --- 10. INFO & INSTALLATION MODAL ---
+        document.getElementById('btn-info-modal').addEventListener('click', () => {
+            openModal(
+                `<span class="text-emerald-400">📜 INSTALLATIONS-SCHRITTE</span>`,
+                `
+                <div class="space-y-3 text-xs text-gray-200">
+                    <div class="p-2 bg-black/50 border-l-4 border-emerald-500">
+                        <strong>1. Web-App als APK verpacken:</strong> Wir nutzen ein kostenloses Tool (z.B. <em>Web2App / Website 2 APK</em>), um genau dieses HTML/JS-Design in eine kleine Android TV .apk zu verwandeln.
+                    </div>
+                    <div class="p-2 bg-black/50 border-l-4 border-yellow-500">
+                        <strong>2. Über Downloader installieren:</strong> Am Fire TV Stick öffnest du die <em>Downloader App</em>, gibst die URL der .apk ein und drückst auf Installieren.
+                    </div>
+                    <div class="p-2 bg-black/50 border-l-4 border-cyan-500">
+                        <strong>3. Autostart beim TV-Einschalten:</strong> Mit der App <em>Launch on Boot</em> startet dein neuer Minecraft-Launcher automatisch jedes Mal, wenn der TV oder der Fire Stick angeht.
+                    </div>
+                </div>
+                `,
+                `<button onclick="closeModal()" class="mc-block px-4 py-2 text-xs text-emerald-300 hover:bg-stone-700 cursor-pointer">VERSTANDEN</button>`
+            );
+        });
+
+        // Initialize First Focus on Page Load
+        window.onload = () => {
+            updateGreeting();
+            setFocus(0, false);
+        };
+    </script>
+</body>
+</html>
