@@ -29,18 +29,15 @@ steps:
 
   - name: Android-Projektstruktur & App-Code erzeugen
     run: |
-      # Prüfen, ob index.html vorhanden ist
       if [ ! -f "index.html" ]; then
         echo "FEHLER: index.html wurde im Hauptverzeichnis des Repositories nicht gefunden!"
         exit 1
       fi
 
-      # Verzeichnisse für das Android-Projekt anlegen
       mkdir -p android-project/app/src/main/assets
       mkdir -p android-project/app/src/main/java/com/filmino/mclauncher
       mkdir -p android-project/app/src/main/res/drawable
 
-      # Deine Minecraft-Oberfläche in die App-Assets kopieren
       cp index.html android-project/app/src/main/assets/index.html
 
       # 1. settings.gradle
@@ -76,7 +73,7 @@ steps:
       android.useAndroidX=false
       EOF
 
-      # 4. app/build.gradle (optimiert für Fire OS 7 / Android 9+)
+      # 4. app/build.gradle (optimiert fuer Fire OS 7 / Android 9+)
       cat << 'EOF' > android-project/app/build.gradle
       plugins {
           id 'com.android.application'
@@ -107,11 +104,10 @@ steps:
       }
       EOF
 
-      # 5. Minecraft App-Icon (Gras-/Smaragd-Block im Fire-TV-Menü)
+      # 5. Minecraft App-Icon (Gras-/Smaragd-Block)
       cat << 'EOF' > android-project/app/src/main/res/drawable/ic_launcher.xml
       
       
-          
           
           
           
@@ -125,6 +121,7 @@ steps:
       cat << 'EOF' > android-project/app/src/main/res/drawable/tv_banner.xml
       
       
+          
           
           
           
@@ -189,7 +186,6 @@ steps:
           protected void onCreate(Bundle savedInstanceState) {
               super.onCreate(savedInstanceState);
 
-              // Vollbild & Bildschirm aktiv halten
               getWindow().setFlags(
                   WindowManager.LayoutParams.FLAG_FULLSCREEN,
                   WindowManager.LayoutParams.FLAG_FULLSCREEN
@@ -212,14 +208,10 @@ steps:
               webView.setFocusableInTouchMode(true);
               webView.requestFocus();
 
-              // Brücke zwischen JavaScript (index.html) und Fire OS
               webView.addJavascriptInterface(new AndroidBridge(this), "AndroidBridge");
-
-              // Unsere lokale Minecraft-Oberfläche laden
               webView.loadUrl("file:///android_asset/index.html");
           }
 
-          // Fire-TV-Fernbedienung (D-Pad, OK, Zurück) direkt an unsere Web-UI weiterleiten
           @Override
           public boolean dispatchKeyEvent(KeyEvent event) {
               if (event.getAction() == KeyEvent.ACTION_DOWN) {
@@ -242,7 +234,6 @@ steps:
                           jsKey = "Enter";
                           break;
                       case KeyEvent.KEYCODE_BACK:
-                          // Wenn ein Modal offen ist, schließt Zurück das Modal statt der App
                           webView.evaluateJavascript(
                               "(function(){ var m = document.getElementById('modal-container'); " +
                               "if (m && !m.classList.contains('hidden')) { closeModal(); return 'closed'; } " +
@@ -258,7 +249,6 @@ steps:
 
                   if (jsKey != null) {
                       final String key = jsKey;
-                      // Nur abfangen, wenn gerade kein Text-Eingabefeld aktiv ist
                       webView.evaluateJavascript(
                           "(function(){ " +
                           "var tag = document.activeElement ? document.activeElement.tagName : ''; " +
@@ -288,14 +278,12 @@ steps:
               }
           }
 
-          // Brücke für App-Starts und Deep-Links
           public static class AndroidBridge {
               private final Context context;
               private final Map fallbackPackages = new HashMap<>();
 
               public AndroidBridge(Context context) {
                   this.context = context;
-                  // Bekannte Fire-TV- & Österreich-Paketnamen als Fallback hinterlegen
                   fallbackPackages.put("com.amazon.avod", new String[]{"com.amazon.avod", "com.amazon.firebat"});
                   fallbackPackages.put("at.orf.tvthek", new String[]{"at.orf.tvthek", "at.orf.on", "at.orf.orf_on"});
                   fallbackPackages.put("de.prosiebensat1digital.seventv", new String[]{"at.joyn.android", "de.prosiebensat1digital.seventv"});
@@ -323,7 +311,6 @@ steps:
                       }
                   }
 
-                  // Spezialfall Prime Video auf manchen Fire-OS-Versionen
                   if ("com.amazon.avod".equals(packageName)) {
                       try {
                           Intent primeIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.primevideo.com"));
@@ -339,7 +326,6 @@ steps:
               @JavascriptInterface
               public void openUrl(String url) {
                   try {
-                      // Netflix-Links bevorzugt direkt in der Netflix-TV-App öffnen
                       if (url != null && url.contains("netflix.com")) {
                           try {
                               Intent netflixIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
@@ -347,16 +333,14 @@ steps:
                               netflixIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                               context.startActivity(netflixIntent);
                               return;
-                          } catch (Exception ignored) {
-                              // Falls Netflix-Paket anders heißt, unten normal öffnen
-                          }
+                          } catch (Exception ignored) {}
                       }
 
                       Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                       intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                       context.startActivity(intent);
                   } catch (Exception e) {
-                      showToast("Link konnte nicht geöffnet werden.");
+                      showToast("Link konnte nicht geoeffnet werden.");
                   }
               }
 
@@ -400,4 +384,4 @@ steps:
       git push -f origin latest
       gh release create latest Minecraft-TV-Launcher.apk \
         --title "Filmino Craft TV Launcher (Latest)" \
-        --notes "Automatisch gebaute Fire-TV-APK. Direktlink für die Downloader-App: https://github.com/${{ github.repository }}/releases/latest/download/Minecraft-TV-Launcher.apk"
+        --notes "Automatisch gebaute Fire-TV-APK. Direktlink fuer die Downloader-App: https://github.com/${{ github.repository }}/releases/latest/download/Minecraft-TV-Launcher.apk"
